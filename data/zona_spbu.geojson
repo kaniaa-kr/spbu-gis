@@ -13,7 +13,8 @@
       "type": "Feature",
       "properties": {
         "fid": 1,
-        "nama_zona": "Kawasan SPBU 24 Jam"
+        "nama_zona": "Kawasan SPBU 24 Jam",
+        "id": "cb82a46e-b871-4f74-a279-d4095b59b2aa"
       },
       "geometry": {
         "type": "Polygon",
@@ -59,7 +60,8 @@
       "type": "Feature",
       "properties": {
         "fid": 2,
-        "nama_zona": "Zona SPBU Pontianak Selatan"
+        "nama_zona": "Zona SPBU Pontianak Selatan",
+        "id": "2d6376f1-d671-424e-8a07-f415e5a03d86"
       },
       "geometry": {
         "type": "Polygon",
@@ -104,39 +106,6 @@
             [
               109.356263,
               -0.064259
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "nama": "Zona Uji"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              109.33,
-              -0.03
-            ],
-            [
-              109.35,
-              -0.03
-            ],
-            [
-              109.35,
-              -0.01
-            ],
-            [
-              109.33,
-              -0.01
-            ],
-            [
-              109.33,
-              -0.03
             ]
           ]
         ]

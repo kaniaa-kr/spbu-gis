@@ -1,38 +1,252 @@
 <!doctype html>
-<html lang="id">
+<html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>WebGIS SPBU Kota Pontianak</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#061326" />
+        <title>Spidey Tracker // Pontianak Geo-Signal Grid</title>
+        <link rel="icon" href="favicon.svg" type="image/svg+xml" />
         <link rel="stylesheet" href="/lib/leaflet/leaflet.css" />
         <link rel="stylesheet" href="/lib/markercluster/MarkerCluster.css" />
         <link rel="stylesheet" href="style.css" />
     </head>
     <body>
-        <div id="panel">
-            <h3>SPBU Kota Pontianak</h3>
-            <label
-                ><input type="checkbox" id="f-pertalite" checked />
-                <span class="dot" style="background: #2e9e4f"></span>
-                Pertalite</label
-            >
-            <label
-                ><input type="checkbox" id="f-pertamax" checked />
-                <span class="dot" style="background: #d62828"></span>
-                Pertamax</label
-            >
-            <label
-                ><input type="checkbox" id="f-dex" checked />
-                <span class="dot" style="background: #1d4ed8"></span> Dex</label
-            >
-            <hr />
-            <label
-                ><input type="checkbox" id="f-cluster" /> Aktifkan
-                cluster</label
-            >
-            <button id="btn-zona">Gambar zona</button>
-            <p id="info">Memuat data...</p>
-        </div>
-        <div id="map"></div>
+        <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+            <symbol id="spider-glyph" viewBox="0 0 16 16">
+                <path
+                    fill="#ff3b3b"
+                    d="M7 1h2v1H7zM6 2h4v1H6zM5 3h6v1H5zM4 4h8v1H4zM4 5h8v1H4zM3 6h10v1H3zM3 7h10v1H3zM4 8h8v1H4zM5 9h6v1H5zM6 10h4v1H6zM7 11h2v1H7zM2 3h2v1H2zM12 3h2v1h-2zM1 5h2v1H1zM13 5h2v1h-2zM1 8h2v1H1zM13 8h2v1h-2zM2 10h2v1H2zM12 10h2v1h-2zM4 12h2v1H4zM10 12h2v1h-2z"
+                />
+                <path fill="#ffd23f" d="M5 5h2v2H5zM9 5h2v2H9z" />
+                <path fill="#061326" d="M6 5h1v1H6zM9 5h1v1H9z" />
+            </symbol>
+        </svg>
+
+        <a class="skip-link" href="#map">Skip to map</a>
+
+        <header class="hud-top">
+            <div class="brand">
+                <svg class="spider-glyph" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" focusable="false">
+                    <use href="#spider-glyph"></use>
+                </svg>
+                <div class="brand-text">
+                    <h1>SPIDEY TRACKER</h1>
+                    <p class="brand-sub">PONTIANAK GRID // GEO-SIGNAL INTERCEPT</p>
+                </div>
+            </div>
+
+            <div class="top-readouts" aria-label="System readouts">
+                <div class="readout">
+                    <span class="readout-label">UPLINK</span>
+                    <span class="readout-value" id="uplink-status" role="status">SYNCING</span>
+                </div>
+                <div class="readout">
+                    <span class="readout-label">SIGNALS</span>
+                    <span class="readout-value" id="signal-count">00</span>
+                </div>
+                <div class="readout readout-coords">
+                    <span class="readout-label">LAT</span>
+                    <span class="readout-value" id="coord-lat">20.0000</span>
+                </div>
+                <div class="readout readout-coords">
+                    <span class="readout-label">LON</span>
+                    <span class="readout-value" id="coord-lon">0.0000</span>
+                </div>
+                <div class="readout readout-coords">
+                    <span class="readout-label">ZOOM</span>
+                    <span class="readout-value" id="zoom-level">02</span>
+                </div>
+            </div>
+        </header>
+
+        <main id="map" aria-label="Interactive Spidey Tracker map"></main>
+
+        <nav class="hud-tools" aria-label="Tracker controls">
+            <p class="panel-title">TRACKER TOOLS</p>
+
+            <button type="button" class="hud-btn" id="btn-scan">
+                <span class="btn-pip" aria-hidden="true"></span>
+                <span>SCAN AREA</span>
+            </button>
+
+            <button type="button" class="hud-btn" id="btn-reset">
+                <span class="btn-pip" aria-hidden="true"></span>
+                <span>RESET GRID</span>
+            </button>
+
+            <fieldset class="hud-group">
+                <legend>FILTER BBM</legend>
+                <div class="filter-stack" role="group" aria-label="Filter signals by fuel type">
+                    <label class="filter-row">
+                        <input type="checkbox" id="chk-pertalite" checked />
+                        <span class="legend-swatch swatch-pertalite" aria-hidden="true"></span>
+                        PERTALITE
+                    </label>
+                    <label class="filter-row">
+                        <input type="checkbox" id="chk-pertamax" checked />
+                        <span class="legend-swatch swatch-pertamax" aria-hidden="true"></span>
+                        PERTAMAX
+                    </label>
+                    <label class="filter-row">
+                        <input type="checkbox" id="chk-pertamax-turbo" checked />
+                        <span class="legend-swatch swatch-pertamax-turbo" aria-hidden="true"></span>
+                        PERTAMAX TURBO
+                    </label>
+                    <label class="filter-row">
+                        <input type="checkbox" id="chk-dexlite" checked />
+                        <span class="legend-swatch swatch-dexlite" aria-hidden="true"></span>
+                        DEXLITE
+                    </label>
+                    <label class="filter-row">
+                        <input type="checkbox" id="chk-dex" checked />
+                        <span class="legend-swatch swatch-dex" aria-hidden="true"></span>
+                        PERTAMINA DEX
+                    </label>
+                    <label class="filter-row">
+                        <input type="checkbox" id="chk-solar" checked />
+                        <span class="legend-swatch swatch-solar" aria-hidden="true"></span>
+                        SOLAR SUBSIDI
+                    </label>
+                    <label class="filter-row">
+                        <input type="checkbox" id="chk-cluster" />
+                        <span class="legend-swatch swatch-cluster" aria-hidden="true"></span>
+                        CLUSTER
+                    </label>
+                </div>
+            </fieldset>
+
+            <p class="tool-note" id="jumlah-spbu" role="status">SCANNING GRID...</p>
+
+            <button type="button" class="hud-btn" id="btn-log" aria-controls="activity-log" aria-expanded="false">
+                <span class="btn-pip" aria-hidden="true"></span>
+                <span>ACTIVITY LOG</span>
+            </button>
+
+            <!-- Nama zona: muncul hanya saat mode TRACE ZONE aktif, tepat di atas SAVE ZONE -->
+            <fieldset class="hud-group" id="zone-name-group" hidden>
+                <legend>NAMA ZONA</legend>
+                <input
+                    type="text"
+                    class="hud-input"
+                    id="zone-name"
+                    maxlength="40"
+                    autocomplete="off"
+                    placeholder="MAKS 40 KARAKTER"
+                    aria-label="Nama zona (maksimal 40 karakter)"
+                />
+                <p class="tool-note" id="zone-note" role="status"></p>
+            </fieldset>
+
+            <button type="button" class="hud-btn" id="btn-zone" aria-pressed="false">
+                <span class="btn-pip" aria-hidden="true"></span>
+                <span id="zone-label">TRACE ZONE</span>
+            </button>
+
+            <button type="button" class="hud-btn" id="btn-zones" aria-controls="zone-panel" aria-expanded="false">
+                <span class="btn-pip" aria-hidden="true"></span>
+                <span>KELOLA ZONA</span>
+            </button>
+
+            <button type="button" class="hud-btn" id="btn-fx" aria-pressed="true">
+                <span class="btn-pip" aria-hidden="true"></span>
+                <span id="fx-label">CRT FX: ON</span>
+            </button>
+        </nav>
+
+        <aside class="activity-log" id="activity-log" aria-labelledby="log-title" aria-hidden="true" inert>
+            <div class="log-head">
+                <div>
+                    <p class="log-kicker">SIGNAL ARCHIVE</p>
+                    <h2 id="log-title">ACTIVITY LOG</h2>
+                </div>
+                <button type="button" class="icon-btn" id="btn-close-log" aria-label="Close activity log">X</button>
+            </div>
+
+            <div class="log-body">
+                <section class="selected-signal" aria-labelledby="selected-title">
+                    <h3 id="selected-title">LOCKED SIGNAL</h3>
+                    <div class="selected-empty" id="selected-panel" aria-live="polite" aria-atomic="true">
+                        <p>NO SIGNAL LOCKED.</p>
+                        <p class="hint">TAP A SIGNAL ON THE GRID.</p>
+                    </div>
+                </section>
+            </div>
+
+            <div class="log-foot">
+                <button type="button" class="hud-btn" id="btn-retry" hidden>RETRY UPLINK</button>
+                <span class="log-status" id="log-status" role="status">LINK: STANDBY</span>
+            </div>
+        </aside>
+
+        <!-- Panel KELOLA ZONA: memakai struktur activity-log, menempati slot kanan yang sama -->
+        <aside class="activity-log" id="zone-panel" aria-labelledby="zone-title" aria-hidden="true" inert>
+            <div class="log-head">
+                <div>
+                    <p class="log-kicker">ZONE ARCHIVE</p>
+                    <h2 id="zone-title">KELOLA ZONA</h2>
+                </div>
+                <button type="button" class="icon-btn" id="btn-close-zones" aria-label="Close zone list">X</button>
+            </div>
+
+            <div class="log-body">
+                <section class="selected-signal" aria-labelledby="zone-list-title">
+                    <h3 id="zone-list-title">DAFTAR ZONA</h3>
+                    <div class="zone-list" id="zone-list" aria-live="polite">
+                        <div class="selected-empty"><p>BELUM ADA ZONA.</p></div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="log-foot">
+                <span class="log-status" id="zone-status" role="status">ZONES: STANDBY</span>
+            </div>
+        </aside>
+
+        <footer class="hud-bottom">
+            <button type="button" class="trailer-btn" id="btn-trailer">
+                <span class="trailer-play" aria-hidden="true">&#9654;</span>
+                WATCH TRAILER
+            </button>
+
+            <div class="sweep">
+                <div class="sweep-head">
+                    <span>NEXT SATELLITE SWEEP</span>
+                    <span class="sweep-time" id="timer-digits" role="timer" aria-live="off">10:00</span>
+                </div>
+                <div class="sweep-track" aria-hidden="true">
+                    <div class="sweep-fill" id="sweep-fill"></div>
+                </div>
+            </div>
+
+            <div class="bottom-meta" aria-hidden="true">
+                <span class="rec-dot"></span>
+                SIM FEED // CH 08
+            </div>
+        </footer>
+
+        <dialog class="trailer-dialog" id="trailer-dialog" aria-labelledby="trailer-title" aria-describedby="trailer-desc">
+            <div class="trailer-head">
+                <div>
+                    <p class="log-kicker">SIM FEED // CH 08</p>
+                    <h2 id="trailer-title">TRAILER FEED</h2>
+                </div>
+                <button type="button" class="icon-btn" id="btn-close-trailer" aria-label="Close trailer">X</button>
+            </div>
+
+            <div class="crt-screen">
+                <svg class="crt-spider" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" focusable="false">
+                    <use href="#spider-glyph"></use>
+                </svg>
+                <p class="crt-line">REEL NOT TRANSMITTED</p>
+                <p class="crt-sub">[NO TRAILER FOOTAGE SUPPLIED]</p>
+            </div>
+
+            <p class="trailer-copy" id="trailer-desc">
+                This build has no trailer reel. Close the feed and tap a signal marker to open its file.
+            </p>
+
+            <button type="button" class="hud-btn trailer-close" id="btn-return">RETURN TO GRID</button>
+        </dialog>
 
         <script src="/lib/leaflet/leaflet.js"></script>
         <script src="/lib/markercluster/leaflet.markercluster.js"></script>
