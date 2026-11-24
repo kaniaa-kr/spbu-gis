@@ -105,3 +105,71 @@ fetch("/api/data/spbu")
     document.getElementById("info").textContent =
       "Gagal memuat data: " + err.message;
   });
+
+// ===== GAMBAR ZONA (kirim ke POST /api/feature/zona) =====
+let menggambar = false;
+let titikZona = [];
+let garisSementara = null;
+
+const btnZona = document.getElementById("btn-zona");
+const info = document.getElementById("info");
+
+btnZona.addEventListener("click", async () => {
+  if (!menggambar) {
+    // mulai menggambar
+    menggambar = true;
+    titikZona = [];
+    btnZona.textContent = "Simpan zona";
+    info.textContent =
+      'Klik peta untuk menambah titik (min. 3), lalu klik "Simpan zona".';
+    return;
+  }
+
+  // selesai: validasi lalu kirim
+  if (titikZona.length < 3) {
+    info.textContent = "Minimal 3 titik untuk membentuk poligon.";
+    return;
+  }
+
+  const ring = titikZona.map(([lat, lng]) => [lng, lat]); // balik ke [lng, lat]
+  ring.push(ring[0]); // tutup cincin poligon
+
+  const feature = {
+    type: "Feature",
+    properties: { nama: "Zona gambar " + new Date().toLocaleTimeString() },
+    geometry: { type: "Polygon", coordinates: [ring] },
+  };
+
+  try {
+    const res = await fetch("/api/feature/zona", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(feature),
+    });
+    const hasil = await res.json();
+    info.textContent = res.ok
+      ? `Tersimpan. Total zona: ${hasil.total_zona}`
+      : `Gagal: ${hasil.error}`;
+  } catch (err) {
+    info.textContent = "Gagal mengirim: " + err.message;
+  }
+
+  // reset mode gambar (poligon tetap tampil di peta)
+  menggambar = false;
+  btnZona.textContent = "Gambar zona";
+  if (garisSementara) {
+    L.polygon(titikZona, { color: "#f59e0b" }).addTo(map);
+    map.removeLayer(garisSementara);
+    garisSementara = null;
+  }
+});
+
+map.on("click", (e) => {
+  if (!menggambar) return;
+  titikZona.push([e.latlng.lat, e.latlng.lng]);
+  if (garisSementara) map.removeLayer(garisSementara);
+  garisSementara = L.polyline(titikZona, {
+    color: "#f59e0b",
+    dashArray: "4",
+  }).addTo(map);
+});
